@@ -102,7 +102,7 @@ export function ContextWindowPanel() {
   return (
     <div className="flex flex-col h-full bg-[var(--surface-primary)]">
       <div className="px-4 py-2 border-b border-[var(--border-primary)]">
-        <h2 className="text-sm font-semibold text-[var(--text-primary)]">Context Window</h2>
+        <h2 className="text-sm font-semibold text-[var(--text-primary)]">Context List</h2>
       </div>
       <TokenUsageBar />
       <MessagePalette onAdd={handleAdd} />
