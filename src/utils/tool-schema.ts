@@ -1,14 +1,24 @@
 import type { ToolDefinition } from '../types/settings';
 
 export function buildToolSchemas(tools: ToolDefinition[]) {
-  return tools.map((tool) => ({
-    type: 'function' as const,
-    function: {
-      name: tool.name,
-      description: tool.description,
-      parameters: { type: 'object', properties: {} },
-    },
-  }));
+  return tools.map((tool) => {
+    let parameters: Record<string, unknown> = { type: 'object', properties: {} };
+    if (tool.parametersJson?.trim()) {
+      try {
+        parameters = JSON.parse(tool.parametersJson);
+      } catch {
+        // fallback to empty params
+      }
+    }
+    return {
+      type: 'function' as const,
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters,
+      },
+    };
+  });
 }
 
 export function formatToolsForPrompt(tools: ToolDefinition[]): string {

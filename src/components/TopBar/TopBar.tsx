@@ -1,11 +1,16 @@
-import { Workflow, Settings, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { Workflow, Settings, ArrowLeft, RotateCcw } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { RunAgentButton } from './RunAgentButton';
 import { ThemeToggle } from './ThemeToggle';
 import { useAppStore } from '../../store/useAppStore';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
 
 export function TopBar() {
   const agentError = useAppStore((s) => s.agentError);
+  const resetContextData = useAppStore((s) => s.resetContextData);
+  const resetSequenceData = useAppStore((s) => s.resetSequenceData);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { pathname } = useLocation();
   const onSettings = pathname === '/settings';
 
@@ -30,6 +35,16 @@ export function TopBar() {
             Error: {agentError}
           </span>
         )}
+        {!onSettings && (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--surface-secondary)] border border-[var(--border-primary)] hover:border-[var(--border-secondary)] transition-colors text-xs text-[var(--text-secondary)]"
+            title="Reset Context & Diagram"
+          >
+            <RotateCcw size={12} />
+            Reset
+          </button>
+        )}
         {!onSettings && <RunAgentButton />}
         <ThemeToggle />
         {!onSettings && (
@@ -42,6 +57,17 @@ export function TopBar() {
           </Link>
         )}
       </div>
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Reset Context & Diagram"
+        message="This will clear all context messages and sequence diagram steps. Settings and connector configuration will be preserved."
+        onConfirm={() => {
+          resetContextData();
+          resetSequenceData();
+          setShowResetConfirm(false);
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

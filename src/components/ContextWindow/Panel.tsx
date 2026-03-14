@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -18,7 +18,14 @@ import { syncOnMessageReorder } from '../../store/slices/sync-middleware';
 import { TokenUsageBar } from './TokenUsageBar';
 import { MessagePalette } from './MessagePalette';
 import { MessageBlock } from './MessageBlock';
+import { SystemPromptPickerDialog } from './SystemPromptPickerDialog';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+import type { MessageType } from '../../types/context';
+
+interface PendingAdd {
+  type: MessageType;
+  content?: string;
+}
 
 export function ContextWindowPanel() {
   const messages = useAppStore((s) => s.messages);
@@ -28,6 +35,7 @@ export function ContextWindowPanel() {
   const selectMessage = useAppStore((s) => s.selectMessage);
   const reorderMessages = useAppStore((s) => s.reorderMessages);
   const { handleAddFromPalette } = useDragAndDrop();
+  const [pendingAdd, setPendingAdd] = useState<PendingAdd | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -43,6 +51,41 @@ export function ContextWindowPanel() {
     },
     [reorderMessages],
   );
+
+  const handleAdd = useCallback(
+    (type: MessageType, content?: string) => {
+      // When adding user_message with no system prompt, ask the user first
+      const hasSystemPrompt = useAppStore.getState().messages.some(
+        (m) => m.type === 'system_prompt',
+      );
+      if (type === 'user_message' && !hasSystemPrompt) {
+        setPendingAdd({ type, content });
+        return;
+      }
+      handleAddFromPalette(type, content);
+    },
+    [handleAddFromPalette],
+  );
+
+  const handlePickSystemPrompt = useCallback(
+    (resolvedContent: string) => {
+      // Add the system prompt first, then the pending user message
+      handleAddFromPalette('system_prompt', resolvedContent);
+      if (pendingAdd) {
+        handleAddFromPalette(pendingAdd.type, pendingAdd.content);
+      }
+      setPendingAdd(null);
+    },
+    [handleAddFromPalette, pendingAdd],
+  );
+
+  const handleSkipSystemPrompt = useCallback(() => {
+    // Just add the pending user message without a system prompt
+    if (pendingAdd) {
+      handleAddFromPalette(pendingAdd.type, pendingAdd.content);
+    }
+    setPendingAdd(null);
+  }, [handleAddFromPalette, pendingAdd]);
 
   const handleSelectMessage = useCallback(
     (msg: { id: string; linkedSequenceStepId: string | null }) => {
@@ -62,7 +105,7 @@ export function ContextWindowPanel() {
         <h2 className="text-sm font-semibold text-[var(--text-primary)]">Context Window</h2>
       </div>
       <TokenUsageBar />
-      <MessagePalette onAdd={handleAddFromPalette} />
+      <MessagePalette onAdd={handleAdd} />
       <div className="flex-1 overflow-y-auto p-4" onClick={handleBackgroundClick}>
         <DndContext
           sensors={sensors}
@@ -92,6 +135,11 @@ export function ContextWindowPanel() {
           </div>
         )}
       </div>
+      <SystemPromptPickerDialog
+        open={pendingAdd !== null}
+        onSelect={handlePickSystemPrompt}
+        onSkip={handleSkipSystemPrompt}
+      />
     </div>
   );
 }

@@ -5,12 +5,25 @@ import type { SequenceSlice } from './sequence-slice';
 
 type AppStore = ContextSlice & SequenceSlice;
 
-const MESSAGE_TO_ARROW: Record<MessageType, { from: ActorId; to: ActorId } | null> = {
+interface ArrowMapping {
+  from: ActorId;
+  to: ActorId;
+  labelOverride?: string;
+  linked: boolean;
+}
+
+const MESSAGE_TO_ARROWS: Record<MessageType, ArrowMapping[] | null> = {
   system_prompt: null,
-  user_message: { from: 'frontend', to: 'backend' },
-  assistant_response: { from: 'llm', to: 'backend' },
-  tool_call: { from: 'llm', to: 'tool' },
-  tool_result: { from: 'tool', to: 'llm' },
+  user_message: [
+    { from: 'frontend', to: 'backend', labelOverride: 'User request', linked: false },
+    { from: 'backend', to: 'llm', linked: true },
+  ],
+  assistant_response: [
+    { from: 'llm', to: 'backend', linked: true },
+    { from: 'backend', to: 'frontend', labelOverride: 'Return response', linked: false },
+  ],
+  tool_call: [{ from: 'llm', to: 'tool', linked: true }],
+  tool_result: [{ from: 'tool', to: 'llm', linked: true }],
 };
 
 export function syncOnMessageAdd(store: AppStore, messageId: string) {
@@ -18,23 +31,23 @@ export function syncOnMessageAdd(store: AppStore, messageId: string) {
   if (!message) return;
   if (store._source === 'sync') return;
 
-  const mapping = MESSAGE_TO_ARROW[message.type];
-  if (!mapping) return;
+  const mappings = MESSAGE_TO_ARROWS[message.type];
+  if (!mappings) return;
 
-  const stepId = store.addStep(mapping.from, mapping.to, message.content.slice(0, 50) || message.type, {
-    wrapModelCall: message.type === 'user_message' || message.type === 'assistant_response' ? undefined : undefined,
-    wrapToolCall: message.type === 'tool_call' || message.type === 'tool_result' ? undefined : undefined,
-  }, 'sync');
+  for (const mapping of mappings) {
+    const label = mapping.labelOverride ?? (message.content.slice(0, 50) || message.type);
+    const stepId = store.addStep(mapping.from, mapping.to, label, {}, 'sync');
 
-  store.linkMessageToStep(messageId, message.id);
-  store.linkStepToMessage(stepId, messageId);
+    if (mapping.linked) {
+      store.linkStepToMessage(stepId, messageId);
 
-  // Update message with step link
-  const msgs = store.messages.map((m) =>
-    m.id === messageId ? { ...m, linkedSequenceStepId: stepId } : m,
-  );
-  // Direct set to avoid recursion - we set _source: 'sync'
-  store.setMessages(msgs);
+      // Update message with step link
+      const msgs = store.messages.map((m) =>
+        m.id === messageId ? { ...m, linkedSequenceStepId: stepId } : m,
+      );
+      store.setMessages(msgs);
+    }
+  }
 }
 
 export function syncOnStepAdd(store: AppStore, stepId: string) {
@@ -57,14 +70,66 @@ export function syncOnStepAdd(store: AppStore, stepId: string) {
 
 export function syncOnMessageRemove(store: AppStore, linkedStepId: string | null) {
   if (linkedStepId) {
+    const companionId = findCompanionStepId(store, linkedStepId);
+    if (companionId) {
+      store.removeStep(companionId, 'sync');
+    }
     store.removeStep(linkedStepId, 'sync');
   }
 }
 
 export function syncOnStepRemove(store: AppStore, linkedMessageId: string | null) {
   if (linkedMessageId) {
+    // The step being removed is linked — find it via its linkedContextMessageId
+    const linkedStep = store.steps.find((s) => s.linkedContextMessageId === linkedMessageId);
+    if (linkedStep) {
+      const companionId = findCompanionStepId(store, linkedStep.id);
+      if (companionId) {
+        store.removeStep(companionId, 'sync');
+      }
+    }
     store.removeMessage(linkedMessageId, 'sync');
   }
+}
+
+function findCompanionStepId(store: AppStore, linkedStepId: string): string | null {
+  const linkedStep = store.steps.find((s) => s.id === linkedStepId);
+  if (!linkedStep) return null;
+
+  for (const mappings of Object.values(MESSAGE_TO_ARROWS)) {
+    if (!mappings) continue;
+
+    const linkedIdx = mappings.findIndex(
+      (m) => m.linked && m.from === linkedStep.from && m.to === linkedStep.to,
+    );
+    if (linkedIdx === -1) continue;
+
+    const companionIdx = mappings.findIndex((m) => !m.linked);
+    if (companionIdx === -1) return null;
+
+    const companion = mappings[companionIdx];
+    const companionIsBefore = companionIdx < linkedIdx;
+
+    const sortedSteps = [...store.steps].sort((a, b) => a.order - b.order);
+    const linkedPos = sortedSteps.findIndex((s) => s.id === linkedStep.id);
+    if (linkedPos === -1) return null;
+
+    const candidateIdx = companionIsBefore ? linkedPos - 1 : linkedPos + 1;
+    if (candidateIdx < 0 || candidateIdx >= sortedSteps.length) return null;
+
+    const candidate = sortedSteps[candidateIdx];
+    if (
+      candidate.from === companion.from &&
+      candidate.to === companion.to &&
+      !candidate.linkedContextMessageId
+    ) {
+      return candidate.id;
+    }
+
+    return null;
+  }
+
+  return null;
 }
 
 export function syncOnMessageReorder(store: AppStore) {
@@ -89,11 +154,11 @@ export function syncOnMessageReorder(store: AppStore) {
 }
 
 function findMessageTypeForArrow(from: ActorId, to: ActorId): MessageType | null {
-  if (from === 'frontend' && to === 'backend') return 'user_message';
+  // Only inside-context arrows create messages
   if (from === 'backend' && to === 'llm') return 'user_message';
   if (from === 'llm' && to === 'backend') return 'assistant_response';
-  if (from === 'llm' && to === 'frontend') return 'assistant_response';
   if (from === 'llm' && to === 'tool') return 'tool_call';
   if (from === 'tool' && to === 'llm') return 'tool_result';
+  // Outside-context arrows don't create messages
   return null;
 }

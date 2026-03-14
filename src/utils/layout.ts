@@ -65,13 +65,15 @@ export function computeLayout(
   const arrows: ArrowLayout[] = sortedSteps.map((step, i) => {
     const y = DIAGRAM_PADDING + ACTOR_HEADER_HEIGHT + i * (STEP_HEIGHT + STEP_VERTICAL_GAP) + STEP_HEIGHT / 2;
     const fromX = actorXMap.get(step.from) ?? DIAGRAM_PADDING;
-    const toX = actorXMap.get(step.to) ?? DIAGRAM_PADDING;
+    const effectiveTo = (step.wrapModelCall || step.wrapToolCall) && step.wrapOverrideTo
+      ? step.wrapOverrideTo : step.to;
+    const toX = actorXMap.get(effectiveTo) ?? DIAGRAM_PADDING;
     return {
       step,
       fromX,
       toX,
       y,
-      isSelfMessage: step.type === 'self_message' || step.from === step.to,
+      isSelfMessage: step.type === 'self_message' || step.from === effectiveTo,
     };
   });
 

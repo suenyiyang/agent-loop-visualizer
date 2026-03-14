@@ -33,8 +33,8 @@ export default function App() {
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
       {dialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={cancelDialog}>
+          <div className="bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{dialog.title}</h3>
             <p className="text-[var(--text-secondary)] mb-6">{dialog.message}</p>
             <div className="flex justify-end gap-3">

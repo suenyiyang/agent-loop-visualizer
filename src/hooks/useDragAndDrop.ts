@@ -38,9 +38,9 @@ export function useDragAndDrop() {
   );
 
   const handleAddFromPalette = useCallback(
-    (type: MessageType) => {
+    (type: MessageType, content?: string) => {
       const state = store.getState();
-      const messageId = state.addMessage(type, '', 'user');
+      const messageId = state.addMessage(type, content ?? '', 'user');
       syncOnMessageAdd(store.getState(), messageId);
     },
     [store],

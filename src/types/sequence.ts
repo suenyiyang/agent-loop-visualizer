@@ -19,6 +19,7 @@ export interface SequenceStep {
   interruptType?: 'approval' | 'user_input';
   wrapModelCall?: boolean;
   wrapToolCall?: boolean;
+  wrapOverrideTo?: ActorId;
   order: number;
 }
 

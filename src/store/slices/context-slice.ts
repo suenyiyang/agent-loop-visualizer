@@ -19,6 +19,7 @@ export interface ContextSlice {
   linkMessageToStep: (messageId: string, stepId: string) => void;
   setMessages: (messages: ContextMessage[]) => void;
   selectMessage: (id: string | null) => void;
+  resetContextData: () => void;
 }
 
 export const createContextSlice: StateCreator<ContextSlice, [], [], ContextSlice> = (set, get) => ({
@@ -96,4 +97,7 @@ export const createContextSlice: StateCreator<ContextSlice, [], [], ContextSlice
   setMessages: (messages) => set({ messages, _source: 'sync' }),
 
   selectMessage: (id) => set({ selectedMessageId: id }),
+
+  resetContextData: () =>
+    set({ messages: [], selectedMessageId: null, _source: 'user' }),
 });

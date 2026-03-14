@@ -14,7 +14,7 @@ export interface SequenceSlice {
     from: ActorId,
     to: ActorId,
     label: string,
-    options?: Partial<Pick<SequenceStep, 'type' | 'isAsync' | 'wrapModelCall' | 'wrapToolCall' | 'interruptType'>>,
+    options?: Partial<Pick<SequenceStep, 'type' | 'isAsync' | 'wrapModelCall' | 'wrapToolCall' | 'wrapOverrideTo' | 'interruptType'>>,
     source?: 'user' | 'sync' | 'agent',
   ) => string;
   updateStep: (id: string, updates: Partial<SequenceStep>) => void;
@@ -25,6 +25,7 @@ export interface SequenceSlice {
   setSteps: (steps: SequenceStep[]) => void;
   setActors: (actors: Actor[]) => void;
   setGroups: (groups: ActorGroup[]) => void;
+  resetSequenceData: () => void;
 }
 
 export const createSequenceSlice: StateCreator<SequenceSlice, [], [], SequenceSlice> = (
@@ -51,6 +52,7 @@ export const createSequenceSlice: StateCreator<SequenceSlice, [], [], SequenceSl
       linkedContextMessageId: null,
       wrapModelCall: options.wrapModelCall,
       wrapToolCall: options.wrapToolCall,
+      wrapOverrideTo: options.wrapOverrideTo,
       interruptType: options.interruptType,
       order,
     };
@@ -93,4 +95,7 @@ export const createSequenceSlice: StateCreator<SequenceSlice, [], [], SequenceSl
   setSteps: (steps) => set({ steps, _seqSource: 'sync' }),
   setActors: (actors) => set({ actors }),
   setGroups: (groups) => set({ groups }),
+
+  resetSequenceData: () =>
+    set({ steps: [], selectedStepId: null, actors: DEFAULT_ACTORS, groups: DEFAULT_GROUPS, _seqSource: 'user' }),
 });

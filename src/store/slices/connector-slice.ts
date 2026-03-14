@@ -8,17 +8,20 @@ export interface ConnectorSlice {
 
   setConnectorSettings: (settings: Partial<ConnectorSettings>) => void;
   setAgentStatus: (status: AgentStatus, error?: string) => void;
+  resetConnectorSettings: () => void;
 }
+
+const DEFAULT_CONNECTOR_SETTINGS: ConnectorSettings = {
+  baseUrl: 'http://localhost:11434/v1',
+  apiKey: 'ollama',
+  modelId: 'qwen3.5:0.8b',
+};
 
 export const createConnectorSlice: StateCreator<ConnectorSlice, [], [], ConnectorSlice> = (
   set,
   get,
 ) => ({
-  connectorSettings: {
-    baseUrl: 'https://api.openai.com/v1',
-    apiKey: '',
-    modelId: 'gpt-4o',
-  },
+  connectorSettings: { ...DEFAULT_CONNECTOR_SETTINGS },
   agentStatus: 'idle',
   agentError: null,
 
@@ -31,4 +34,7 @@ export const createConnectorSlice: StateCreator<ConnectorSlice, [], [], Connecto
   setAgentStatus: (status, error) => {
     set({ agentStatus: status, agentError: error ?? null });
   },
+
+  resetConnectorSettings: () =>
+    set({ connectorSettings: { ...DEFAULT_CONNECTOR_SETTINGS }, agentStatus: 'idle', agentError: null }),
 });

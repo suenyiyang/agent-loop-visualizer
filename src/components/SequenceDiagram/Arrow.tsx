@@ -1,5 +1,5 @@
 import type { ArrowLayout } from '../../utils/layout';
-import { WrapperBadge } from './WrapperBadge';
+import { WrapRhombus } from './WrapRhombus';
 
 interface ArrowProps {
   layout: ArrowLayout;
@@ -90,6 +90,57 @@ export function Arrow({ layout, isHighlighted, onClick }: ArrowProps) {
     );
   }
 
+  const hasWrap = step.wrapModelCall || step.wrapToolCall;
+  const wrapLabel = step.wrapModelCall ? 'wrapModelCall' : 'wrapToolCall';
+  const wrapColor = step.wrapModelCall ? '#a78bfa' : '#fbbf24';
+
+  if (hasWrap) {
+    const rhombusX = fromX + (toX - fromX) * 0.4;
+    const labelX = (fromX + toX) / 2;
+    const labelY = y - 8;
+    const dashArray = step.isAsync ? '6 3' : undefined;
+
+    return (
+      <g onClick={onClick} className="cursor-pointer">
+        {/* Label */}
+        <text
+          x={labelX}
+          y={labelY}
+          textAnchor="middle"
+          style={{ fill: color }}
+          fontSize={10}
+          fontWeight={isHighlighted ? 600 : 400}
+        >
+          {step.label}
+        </text>
+        {/* Segment 1: from → rhombus */}
+        <line
+          x1={fromX}
+          y1={y}
+          x2={rhombusX - 7}
+          y2={y}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={dashArray}
+          markerEnd="url(#arrowhead)"
+        />
+        {/* Rhombus */}
+        <WrapRhombus x={rhombusX} y={y} label={wrapLabel} color={wrapColor} />
+        {/* Segment 2: rhombus → to */}
+        <line
+          x1={rhombusX + 7}
+          y1={y}
+          x2={toX}
+          y2={y}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={dashArray}
+          markerEnd="url(#arrowhead)"
+        />
+      </g>
+    );
+  }
+
   const midX = (fromX + toX) / 2;
   const labelY = y - 8;
 
@@ -117,23 +168,6 @@ export function Arrow({ layout, isHighlighted, onClick }: ArrowProps) {
       >
         {step.label}
       </text>
-      {/* Wrapper badges */}
-      {step.wrapModelCall && (
-        <WrapperBadge
-          label="wrapModelCall"
-          x={midX}
-          y={y}
-          color="#a78bfa"
-        />
-      )}
-      {step.wrapToolCall && (
-        <WrapperBadge
-          label="wrapToolCall"
-          x={midX}
-          y={y}
-          color="#fbbf24"
-        />
-      )}
     </g>
   );
 }

@@ -22,6 +22,7 @@ export function TokenUsageBar() {
   const [showPresets, setShowPresets] = useState(false);
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const presetsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -29,6 +30,17 @@ export function TokenUsageBar() {
       inputRef.current.select();
     }
   }, [editing]);
+
+  useEffect(() => {
+    if (!showPresets) return;
+    const handler = (e: MouseEvent) => {
+      if (presetsRef.current && !presetsRef.current.contains(e.target as Node)) {
+        setShowPresets(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showPresets]);
 
   const startEdit = () => {
     setDraft(tokenLimit.toString());
@@ -90,7 +102,7 @@ export function TokenUsageBar() {
                 ▾
               </button>
               {showPresets && (
-                <div className="absolute right-0 top-5 z-20 bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-md shadow-lg py-1 min-w-[80px]">
+                <div ref={presetsRef} className="absolute right-0 top-5 z-20 bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-md shadow-lg py-1 min-w-[80px]">
                   {PRESETS.map((p) => (
                     <button
                       key={p.value}

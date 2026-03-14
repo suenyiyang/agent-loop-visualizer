@@ -1,9 +1,9 @@
 import type { ContextMessage } from '../types/context';
 import type { Actor, SequenceStep, ActorGroup } from '../types/sequence';
-import type { ToolDefinition } from '../types/settings';
+import type { ToolDefinition, SystemPromptTemplate } from '../types/settings';
 
 export interface SnapshotSettings {
-  systemPromptTemplate: string;
+  systemPromptTemplates: SystemPromptTemplate[];
   toolDefinitions: ToolDefinition[];
   connectorSettings: { baseUrl: string; modelId: string };
 }

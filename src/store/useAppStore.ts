@@ -19,7 +19,7 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'agent-loop-visualizer',
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         messages: state.messages,
         tokenLimit: state.tokenLimit,
@@ -30,11 +30,26 @@ export const useAppStore = create<AppStore>()(
         connectorSettings: {
           baseUrl: state.connectorSettings.baseUrl,
           modelId: state.connectorSettings.modelId,
-          apiKey: '',
+          apiKey: state.connectorSettings.apiKey,
         },
-        systemPromptTemplate: state.systemPromptTemplate,
+        systemPromptTemplates: state.systemPromptTemplates,
         toolDefinitions: state.toolDefinitions,
       }),
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>;
+        if (version < 2) {
+          // Migrate single systemPromptTemplate → systemPromptTemplates array
+          const oldTemplate = state.systemPromptTemplate as string | undefined;
+          if (oldTemplate && !state.systemPromptTemplates) {
+            state.systemPromptTemplates = [
+              { id: 'default', name: 'Default', template: oldTemplate },
+            ];
+          }
+          delete state.systemPromptTemplate;
+          delete state.activeTemplateId;
+        }
+        return state;
+      },
     },
   ),
 );

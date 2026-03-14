@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import type { ActorId, StepType } from '../../types/sequence';
@@ -12,6 +12,7 @@ interface StepEditorProps {
     isAsync?: boolean;
     wrapModelCall?: boolean;
     wrapToolCall?: boolean;
+    wrapOverrideTo?: ActorId;
     interruptType?: 'approval' | 'user_input';
   }) => void;
 }
@@ -27,19 +28,35 @@ export function StepEditor({ stepId, onClose, onAddStep }: StepEditorProps) {
   const [isAsync, setIsAsync] = useState(step?.isAsync ?? false);
   const [wrapModelCall, setWrapModelCall] = useState(step?.wrapModelCall ?? false);
   const [wrapToolCall, setWrapToolCall] = useState(step?.wrapToolCall ?? false);
+  const [wrapOverrideTo, setWrapOverrideTo] = useState<ActorId | ''>(step?.wrapOverrideTo ?? '');
   const [interruptType, setInterruptType] = useState<'approval' | 'user_input'>(
     step?.interruptType ?? 'approval',
   );
 
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
   const handleSubmit = () => {
+    const resolvedOverride = (wrapModelCall || wrapToolCall) && wrapOverrideTo
+      ? wrapOverrideTo as ActorId : undefined;
     if (stepId && step) {
       updateStep(stepId, {
         from, to, label, type, isAsync, wrapModelCall, wrapToolCall,
+        wrapOverrideTo: resolvedOverride,
         interruptType: type === 'interrupt' ? interruptType : undefined,
       });
     } else {
       onAddStep(from, to, label, {
         type, isAsync, wrapModelCall, wrapToolCall,
+        wrapOverrideTo: resolvedOverride,
         interruptType: type === 'interrupt' ? interruptType : undefined,
       });
     }
@@ -47,7 +64,7 @@ export function StepEditor({ stepId, onClose, onAddStep }: StepEditorProps) {
   };
 
   return (
-    <div className="absolute top-12 right-4 z-30 w-72 bg-[var(--surface-secondary)] border border-[var(--border-secondary)] rounded-lg shadow-xl p-4">
+    <div ref={ref} className="absolute top-12 right-4 z-30 w-72 bg-[var(--surface-secondary)] border border-[var(--border-secondary)] rounded-lg shadow-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">
           {stepId ? 'Edit Step' : 'Add Step'}
@@ -75,7 +92,13 @@ export function StepEditor({ stepId, onClose, onAddStep }: StepEditorProps) {
             <label className="text-xs text-[var(--text-tertiary)] block mb-1">To</label>
             <select
               value={to}
-              onChange={(e) => setTo(e.target.value as ActorId)}
+              onChange={(e) => {
+                const newTo = e.target.value as ActorId;
+                setTo(newTo);
+                if (newTo !== 'llm') setWrapModelCall(false);
+                if (newTo !== 'tool') setWrapToolCall(false);
+                if (newTo !== 'llm' && newTo !== 'tool') setWrapOverrideTo('');
+              }}
               className="w-full bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded px-2 py-1 text-sm text-[var(--text-primary)]"
             >
               {DEFAULT_ACTORS.map((a) => (
@@ -134,24 +157,45 @@ export function StepEditor({ stepId, onClose, onAddStep }: StepEditorProps) {
             />
             Async (dashed line)
           </label>
-          <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={wrapModelCall}
-              onChange={(e) => setWrapModelCall(e.target.checked)}
-              className="rounded border-[var(--border-secondary)]"
-            />
-            wrapModelCall
-          </label>
-          <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={wrapToolCall}
-              onChange={(e) => setWrapToolCall(e.target.checked)}
-              className="rounded border-[var(--border-secondary)]"
-            />
-            wrapToolCall
-          </label>
+          {to === 'llm' && (
+            <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={wrapModelCall}
+                onChange={(e) => setWrapModelCall(e.target.checked)}
+                className="rounded border-[var(--border-secondary)]"
+              />
+              wrapModelCall
+            </label>
+          )}
+          {to === 'tool' && (
+            <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={wrapToolCall}
+                onChange={(e) => setWrapToolCall(e.target.checked)}
+                className="rounded border-[var(--border-secondary)]"
+              />
+              wrapToolCall
+            </label>
+          )}
+          {(wrapModelCall || wrapToolCall) && (
+            <div>
+              <label className="text-xs text-[var(--text-tertiary)] block mb-1">Redirect To</label>
+              <select
+                value={wrapOverrideTo}
+                onChange={(e) => setWrapOverrideTo(e.target.value as ActorId | '')}
+                className="w-full bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded px-2 py-1 text-sm text-[var(--text-primary)]"
+              >
+                <option value="">No redirect</option>
+                {DEFAULT_ACTORS
+                  .filter((a) => a.id !== from && a.id !== to)
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>{a.label}</option>
+                  ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <button

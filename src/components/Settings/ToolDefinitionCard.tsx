@@ -44,6 +44,13 @@ export function ToolDefinitionCard({ tool, onUpdate, onRemove, isDuplicate }: Pr
           rows={2}
           className="w-full bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded px-2 py-1.5 text-sm text-[var(--text-primary)] resize-none"
         />
+        <textarea
+          value={tool.parametersJson ?? ''}
+          onChange={(e) => onUpdate(tool.id, { parametersJson: e.target.value })}
+          placeholder='{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}'
+          rows={2}
+          className="w-full bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] resize-none font-mono"
+        />
       </div>
       <button
         onClick={() => onRemove(tool.id)}

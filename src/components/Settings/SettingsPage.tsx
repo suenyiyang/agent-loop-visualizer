@@ -2,6 +2,7 @@ import { SystemPromptEditor } from './SystemPromptEditor';
 import { ToolDefinitionList } from './ToolDefinitionList';
 import { ConnectorSettingsInline } from '../TopBar/ConnectorSettingsForm';
 import { ExportImportButtons } from '../TopBar/ExportImportButtons';
+import { ResetSection } from './ResetSection';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -18,7 +19,7 @@ export function SettingsPage() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
-        <Section title="System Prompt Template">
+        <Section title="System Prompt Templates">
           <SystemPromptEditor />
         </Section>
 
@@ -32,6 +33,10 @@ export function SettingsPage() {
 
         <Section title="Data Export / Import">
           <ExportImportButtons />
+        </Section>
+
+        <Section title="Reset">
+          <ResetSection />
         </Section>
       </div>
     </div>

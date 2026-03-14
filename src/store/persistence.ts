@@ -15,7 +15,7 @@ export function exportState() {
     state.steps,
     state.groups,
     {
-      systemPromptTemplate: state.systemPromptTemplate,
+      systemPromptTemplates: state.systemPromptTemplates,
       toolDefinitions: state.toolDefinitions,
       connectorSettings: {
         baseUrl: state.connectorSettings.baseUrl,
@@ -45,7 +45,7 @@ export function importState(file: File): Promise<void> {
         store.setGroups(snapshot.sequenceDiagram.groups);
 
         if (snapshot.settings) {
-          store.setSystemPromptTemplate(snapshot.settings.systemPromptTemplate);
+          store.setSystemPromptTemplates(snapshot.settings.systemPromptTemplates);
           useAppStore.setState({ toolDefinitions: snapshot.settings.toolDefinitions });
           store.setConnectorSettings(snapshot.settings.connectorSettings);
         }
