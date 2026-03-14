@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Workflow, Settings, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Workflow, Settings, ArrowLeft, RotateCcw, Terminal } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { RunAgentButton } from './RunAgentButton';
 import { ThemeToggle } from './ThemeToggle';
@@ -10,6 +10,8 @@ export function TopBar() {
   const agentError = useAppStore((s) => s.agentError);
   const resetContextData = useAppStore((s) => s.resetContextData);
   const resetSequenceData = useAppStore((s) => s.resetSequenceData);
+  const toggleConsole = useAppStore((s) => s.toggleConsole);
+  const consoleVisible = useAppStore((s) => s.consoleVisible);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { pathname } = useLocation();
   const onSettings = pathname === '/settings';
@@ -46,6 +48,20 @@ export function TopBar() {
           </button>
         )}
         {!onSettings && <RunAgentButton />}
+        {!onSettings && (
+          <button
+            onClick={toggleConsole}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-xs ${
+              consoleVisible
+                ? 'bg-blue-900/50 border-blue-700 text-blue-300'
+                : 'bg-[var(--surface-secondary)] border-[var(--border-primary)] hover:border-[var(--border-secondary)] text-[var(--text-secondary)]'
+            }`}
+            title="Toggle Console"
+          >
+            <Terminal size={12} />
+            Console
+          </button>
+        )}
         <ThemeToggle />
         {!onSettings && (
           <Link

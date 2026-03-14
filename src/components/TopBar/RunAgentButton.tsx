@@ -6,15 +6,37 @@ export function RunAgentButton() {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const setAgentStatus = useAppStore((s) => s.setAgentStatus);
   const apiKey = useAppStore((s) => s.connectorSettings.apiKey);
+  const messages = useAppStore((s) => s.messages);
   const [userInput, setUserInput] = useState('');
   const [showInput, setShowInput] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  const lastMessageIsUser = messages.length > 0 && messages[messages.length - 1].type === 'user_message';
 
   const handleRun = useCallback(async () => {
     if (!apiKey) {
       alert('Configure an API key first (LLM button)');
       return;
     }
+
+    // If last message is already a user message, run directly without new input
+    if (lastMessageIsUser) {
+      setAgentStatus('running');
+      abortRef.current = new AbortController();
+      try {
+        const { runAgent } = await import('../../services/langchain-agent');
+        await runAgent(null, abortRef.current.signal);
+        setAgentStatus('idle');
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') {
+          setAgentStatus('idle');
+        } else {
+          setAgentStatus('error', (err as Error).message);
+        }
+      }
+      return;
+    }
+
     if (!userInput.trim()) {
       setShowInput(true);
       return;
@@ -36,7 +58,7 @@ export function RunAgentButton() {
     }
     setShowInput(false);
     setUserInput('');
-  }, [apiKey, userInput, setAgentStatus]);
+  }, [apiKey, userInput, setAgentStatus, lastMessageIsUser]);
 
   const handleAbort = useCallback(() => {
     abortRef.current?.abort();
@@ -65,7 +87,7 @@ export function RunAgentButton() {
 
   return (
     <div className="flex items-center gap-1.5">
-      {showInput && (
+      {showInput && !lastMessageIsUser && (
         <input
           type="text"
           value={userInput}

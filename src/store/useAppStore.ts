@@ -5,8 +5,11 @@ import { createSequenceSlice, type SequenceSlice } from './slices/sequence-slice
 import { createConnectorSlice, type ConnectorSlice } from './slices/connector-slice';
 import { createThemeSlice, type ThemeSlice } from './slices/theme-slice';
 import { createSettingsSlice, type SettingsSlice } from './slices/settings-slice';
+import { createAgentExecutionSlice, type AgentExecutionSlice } from './slices/agent-execution-slice';
+import { createConsoleSlice, type ConsoleSlice } from './slices/console-slice';
+import { createFocusSlice, type FocusSlice } from './slices/focus-slice';
 
-export type AppStore = ContextSlice & SequenceSlice & ConnectorSlice & ThemeSlice & SettingsSlice;
+export type AppStore = ContextSlice & SequenceSlice & ConnectorSlice & ThemeSlice & SettingsSlice & AgentExecutionSlice & ConsoleSlice & FocusSlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -16,6 +19,9 @@ export const useAppStore = create<AppStore>()(
       ...createConnectorSlice(...a),
       ...createThemeSlice(...a),
       ...createSettingsSlice(...a),
+      ...createAgentExecutionSlice(...a),
+      ...createConsoleSlice(...a),
+      ...createFocusSlice(...a),
     }),
     {
       name: 'agent-loop-visualizer',
@@ -34,6 +40,7 @@ export const useAppStore = create<AppStore>()(
         },
         systemPromptTemplates: state.systemPromptTemplates,
         toolDefinitions: state.toolDefinitions,
+        consoleVisible: state.consoleVisible,
       }),
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;

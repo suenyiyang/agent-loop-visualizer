@@ -12,6 +12,8 @@ export function SvgCanvas() {
   const groups = useAppStore((s) => s.groups);
   const selectedStepId = useAppStore((s) => s.selectedStepId);
   const selectStep = useAppStore((s) => s.selectStep);
+  const focusTarget = useAppStore((s) => s.focusTarget);
+  const setFocus = useAppStore((s) => s.setFocus);
 
   const layout = useMemo(
     () => computeLayout(actors, steps, groups),
@@ -25,6 +27,11 @@ export function SvgCanvas() {
     handleMouseMove,
     handleMouseUp,
   } = useSvgPanZoom(layout.width, layout.height);
+
+  const handleArrowClick = (stepId: string) => {
+    selectStep(stepId === selectedStepId ? null : stepId);
+    setFocus({ sequenceStepId: stepId });
+  };
 
   return (
     <svg
@@ -66,10 +73,11 @@ export function SvgCanvas() {
         <Arrow
           key={arrow.step.id}
           layout={arrow}
-          isHighlighted={arrow.step.id === selectedStepId}
-          onClick={() =>
-            selectStep(arrow.step.id === selectedStepId ? null : arrow.step.id)
+          isHighlighted={
+            arrow.step.id === selectedStepId ||
+            arrow.step.id === focusTarget.sequenceStepId
           }
+          onClick={() => handleArrowClick(arrow.step.id)}
         />
       ))}
     </svg>

@@ -15,10 +15,11 @@ interface MessageBlockProps {
   message: ContextMessage;
   isHighlighted: boolean;
   isSelected: boolean;
+  isFocused?: boolean;
   onSelect: () => void;
 }
 
-export function MessageBlock({ message, isHighlighted, isSelected, onSelect }: MessageBlockProps) {
+export function MessageBlock({ message, isHighlighted, isSelected, isFocused, onSelect }: MessageBlockProps) {
   const [expanded, setExpanded] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const updateMessage = useAppStore((s) => s.updateMessage);
@@ -65,6 +66,8 @@ export function MessageBlock({ message, isHighlighted, isSelected, onSelect }: M
   let borderClass: string;
   if (isSelected) {
     borderClass = 'ring-2 ring-blue-400 border-blue-400 bg-blue-400/10';
+  } else if (isFocused) {
+    borderClass = 'ring-2 ring-purple-400 border-purple-400 bg-purple-400/10';
   } else if (isHighlighted) {
     borderClass = 'border-blue-400 bg-blue-400/10';
   } else {

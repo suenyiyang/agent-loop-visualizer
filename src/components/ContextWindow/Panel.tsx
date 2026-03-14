@@ -19,6 +19,8 @@ import { TokenUsageBar } from './TokenUsageBar';
 import { MessagePalette } from './MessagePalette';
 import { MessageBlock } from './MessageBlock';
 import { SystemPromptPickerDialog } from './SystemPromptPickerDialog';
+import { ToolResultInlineInput } from './ToolResultInlineInput';
+import { ToolApprovalInline } from './ToolApprovalInline';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import type { MessageType } from '../../types/context';
 
@@ -34,6 +36,11 @@ export function ContextWindowPanel() {
   const selectStep = useAppStore((s) => s.selectStep);
   const selectMessage = useAppStore((s) => s.selectMessage);
   const reorderMessages = useAppStore((s) => s.reorderMessages);
+  const pendingToolInput = useAppStore((s) => s.pendingToolInput);
+  const pendingApproval = useAppStore((s) => s.pendingApproval);
+  const focusTarget = useAppStore((s) => s.focusTarget);
+  const setFocus = useAppStore((s) => s.setFocus);
+  const clearFocus = useAppStore((s) => s.clearFocus);
   const { handleAddFromPalette } = useDragAndDrop();
   const [pendingAdd, setPendingAdd] = useState<PendingAdd | null>(null);
 
@@ -54,7 +61,6 @@ export function ContextWindowPanel() {
 
   const handleAdd = useCallback(
     (type: MessageType, content?: string) => {
-      // When adding user_message with no system prompt, ask the user first
       const hasSystemPrompt = useAppStore.getState().messages.some(
         (m) => m.type === 'system_prompt',
       );
@@ -69,7 +75,6 @@ export function ContextWindowPanel() {
 
   const handlePickSystemPrompt = useCallback(
     (resolvedContent: string) => {
-      // Add the system prompt first, then the pending user message
       handleAddFromPalette('system_prompt', resolvedContent);
       if (pendingAdd) {
         handleAddFromPalette(pendingAdd.type, pendingAdd.content);
@@ -80,7 +85,6 @@ export function ContextWindowPanel() {
   );
 
   const handleSkipSystemPrompt = useCallback(() => {
-    // Just add the pending user message without a system prompt
     if (pendingAdd) {
       handleAddFromPalette(pendingAdd.type, pendingAdd.content);
     }
@@ -91,13 +95,15 @@ export function ContextWindowPanel() {
     (msg: { id: string; linkedSequenceStepId: string | null }) => {
       selectMessage(msg.id);
       selectStep(msg.linkedSequenceStepId);
+      setFocus({ contextMessageId: msg.id });
     },
-    [selectStep, selectMessage],
+    [selectStep, selectMessage, setFocus],
   );
 
   const handleBackgroundClick = useCallback(() => {
     selectMessage(null);
-  }, [selectMessage]);
+    clearFocus();
+  }, [selectMessage, clearFocus]);
 
   return (
     <div className="flex flex-col h-full bg-[var(--surface-primary)]">
@@ -118,13 +124,23 @@ export function ContextWindowPanel() {
           >
             <div className="space-y-2">
               {messages.map((msg) => (
-                <MessageBlock
-                  key={msg.id}
-                  message={msg}
-                  isHighlighted={msg.linkedSequenceStepId === selectedStepId && selectedStepId !== null}
-                  isSelected={msg.id === selectedMessageId}
-                  onSelect={() => handleSelectMessage(msg)}
-                />
+                <div key={msg.id}>
+                  <MessageBlock
+                    message={msg}
+                    isHighlighted={msg.linkedSequenceStepId === selectedStepId && selectedStepId !== null}
+                    isSelected={msg.id === selectedMessageId}
+                    isFocused={focusTarget.contextMessageId === msg.id}
+                    onSelect={() => handleSelectMessage(msg)}
+                  />
+                  {/* Inline approval UI after tool_call message */}
+                  {msg.type === 'tool_call' && pendingApproval && pendingApproval.toolCallId === msg.metadata?.toolCallId && (
+                    <ToolApprovalInline />
+                  )}
+                  {/* Inline tool result input after tool_call message */}
+                  {msg.type === 'tool_call' && pendingToolInput && pendingToolInput.toolCallId === msg.metadata?.toolCallId && (
+                    <ToolResultInlineInput />
+                  )}
+                </div>
               ))}
             </div>
           </SortableContext>

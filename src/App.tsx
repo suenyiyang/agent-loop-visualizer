@@ -3,20 +3,36 @@ import { Panel, Group, Separator } from 'react-resizable-panels';
 import { TopBar } from './components/TopBar/TopBar';
 import { ContextWindowPanel } from './components/ContextWindow/Panel';
 import { SequenceDiagramPanel } from './components/SequenceDiagram/Panel';
+import { ConsolePanel } from './components/Console/ConsolePanel';
 import { SettingsPage } from './components/Settings/SettingsPage';
 import { useTheme } from './hooks/use-theme';
 import { useKeyboardDelete } from './hooks/use-keyboard-delete';
+import { useAppStore } from './store/useAppStore';
 
 function VisualizerLayout() {
+  const consoleVisible = useAppStore((s) => s.consoleVisible);
+
   return (
-    <Group orientation="horizontal" className="flex-1">
-      <Panel defaultSize={40} minSize={25}>
-        <ContextWindowPanel />
+    <Group orientation="vertical" className="flex-1">
+      <Panel defaultSize={consoleVisible ? 70 : 100} minSize={40}>
+        <Group orientation="horizontal" className="h-full">
+          <Panel defaultSize={40} minSize={25}>
+            <ContextWindowPanel />
+          </Panel>
+          <Separator className="w-1.5 bg-[var(--surface-secondary)] hover:bg-blue-500/40 transition-colors cursor-col-resize" />
+          <Panel defaultSize={60} minSize={30}>
+            <SequenceDiagramPanel />
+          </Panel>
+        </Group>
       </Panel>
-      <Separator className="w-1.5 bg-[var(--surface-secondary)] hover:bg-blue-500/40 transition-colors cursor-col-resize" />
-      <Panel defaultSize={60} minSize={30}>
-        <SequenceDiagramPanel />
-      </Panel>
+      {consoleVisible && (
+        <>
+          <Separator className="h-1.5 bg-[var(--surface-secondary)] hover:bg-blue-500/40 transition-colors cursor-row-resize" />
+          <Panel defaultSize={30} minSize={10} collapsible>
+            <ConsolePanel />
+          </Panel>
+        </>
+      )}
     </Group>
   );
 }

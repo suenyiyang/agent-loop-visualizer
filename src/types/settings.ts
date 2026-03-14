@@ -3,6 +3,13 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parametersJson: string;
+  defaultResult?: string;
+  zodCode?: string;
+  requiresApproval?: boolean;
+  interruptConfig?: {
+    enabled: boolean;
+    type: 'approval' | 'user_input';
+  };
 }
 
 export interface SystemPromptTemplate {

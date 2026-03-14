@@ -2,42 +2,87 @@ import { useAppStore } from '../store/useAppStore';
 import { syncOnMessageAdd } from '../store/slices/sync-middleware';
 
 interface CallbackEvent {
-  type: 'llm_start' | 'llm_end' | 'tool_start' | 'tool_end' | 'agent_end';
+  type: 'llm_start' | 'llm_end' | 'tool_start' | 'tool_end' | 'agent_end'
+    | 'approval_request' | 'approval_granted' | 'approval_rejected'
+    | 'interrupt_start' | 'interrupt_end';
   content: string;
   toolName?: string;
 }
 
-export function handleVisualizationEvent(event: CallbackEvent) {
+interface VisualizationResult {
+  messageId: string | null;
+  stepId: string | null;
+}
+
+export function handleVisualizationEvent(event: CallbackEvent): VisualizationResult {
   const store = useAppStore.getState();
 
   switch (event.type) {
     case 'llm_start': {
-      const id = store.addMessage('user_message', event.content, 'agent');
-      syncOnMessageAdd(useAppStore.getState(), id);
-      break;
+      const messageId = store.addMessage('user_message', event.content, 'agent');
+      syncOnMessageAdd(useAppStore.getState(), messageId);
+      const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
+      return { messageId, stepId: msg?.linkedSequenceStepId ?? null };
     }
     case 'llm_end': {
-      const id = store.addMessage('assistant_response', event.content, 'agent');
-      syncOnMessageAdd(useAppStore.getState(), id);
-      break;
+      const messageId = store.addMessage('assistant_response', event.content, 'agent');
+      syncOnMessageAdd(useAppStore.getState(), messageId);
+      const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
+      return { messageId, stepId: msg?.linkedSequenceStepId ?? null };
     }
     case 'tool_start': {
-      const id = store.addMessage('tool_call', event.content, 'agent');
+      const messageId = store.addMessage('tool_call', event.content, 'agent');
       if (event.toolName) {
-        store.updateMessage(id, { metadata: { toolName: event.toolName } });
+        store.updateMessage(messageId, { metadata: { toolName: event.toolName } });
       }
-      syncOnMessageAdd(useAppStore.getState(), id);
-      break;
+      syncOnMessageAdd(useAppStore.getState(), messageId);
+      const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
+      return { messageId, stepId: msg?.linkedSequenceStepId ?? null };
     }
     case 'tool_end': {
-      const id = store.addMessage('tool_result', event.content, 'agent');
-      syncOnMessageAdd(useAppStore.getState(), id);
-      break;
+      const messageId = store.addMessage('tool_result', event.content, 'agent');
+      syncOnMessageAdd(useAppStore.getState(), messageId);
+      const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
+      return { messageId, stepId: msg?.linkedSequenceStepId ?? null };
     }
     case 'agent_end': {
-      const id = store.addMessage('assistant_response', event.content, 'agent');
-      syncOnMessageAdd(useAppStore.getState(), id);
-      break;
+      const messageId = store.addMessage('assistant_response', event.content, 'agent');
+      syncOnMessageAdd(useAppStore.getState(), messageId);
+      const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
+      return { messageId, stepId: msg?.linkedSequenceStepId ?? null };
+    }
+    // Approval and interrupt events create sequence steps for visualization
+    case 'approval_request': {
+      const stepId = store.addStep('backend', 'frontend', `Approval: ${event.toolName ?? 'tool'}`, {
+        type: 'interrupt',
+        interruptType: 'approval',
+      }, 'agent');
+      return { messageId: null, stepId };
+    }
+    case 'approval_granted': {
+      const stepId = store.addStep('frontend', 'backend', `Approved: ${event.toolName ?? 'tool'}`, {
+        type: 'resume',
+      }, 'agent');
+      return { messageId: null, stepId };
+    }
+    case 'approval_rejected': {
+      const stepId = store.addStep('frontend', 'backend', `Rejected: ${event.toolName ?? 'tool'}`, {
+        type: 'resume',
+      }, 'agent');
+      return { messageId: null, stepId };
+    }
+    case 'interrupt_start': {
+      const stepId = store.addStep('backend', 'frontend', `Interrupt: ${event.toolName ?? 'tool'}`, {
+        type: 'interrupt',
+        interruptType: 'user_input',
+      }, 'agent');
+      return { messageId: null, stepId };
+    }
+    case 'interrupt_end': {
+      const stepId = store.addStep('frontend', 'backend', `Resume: ${event.toolName ?? 'tool'}`, {
+        type: 'resume',
+      }, 'agent');
+      return { messageId: null, stepId };
     }
   }
 }

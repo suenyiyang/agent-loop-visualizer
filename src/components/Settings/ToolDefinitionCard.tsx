@@ -1,5 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import type { ToolDefinition } from '../../types/settings';
+import { SchemaEditorTabs } from './SchemaEditor/SchemaEditorTabs';
 
 const NAME_PATTERN = /^[a-zA-Z_]\w*$/;
 
@@ -44,13 +45,65 @@ export function ToolDefinitionCard({ tool, onUpdate, onRemove, isDuplicate }: Pr
           rows={2}
           className="w-full bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded px-2 py-1.5 text-sm text-[var(--text-primary)] resize-none"
         />
-        <textarea
-          value={tool.parametersJson ?? ''}
-          onChange={(e) => onUpdate(tool.id, { parametersJson: e.target.value })}
-          placeholder='{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}'
-          rows={2}
-          className="w-full bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] resize-none font-mono"
-        />
+
+        {/* Schema Editor with tabs (Feature 1) */}
+        <SchemaEditorTabs tool={tool} onUpdate={(updates) => onUpdate(tool.id, updates)} />
+
+        {/* Default Result (Feature 2) */}
+        <div>
+          <label className="text-xs text-[var(--text-muted)] block mb-1">Default Result</label>
+          <textarea
+            value={tool.defaultResult ?? ''}
+            onChange={(e) => onUpdate(tool.id, { defaultResult: e.target.value })}
+            placeholder='{"result": "example result"}'
+            rows={2}
+            className="w-full bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded px-2 py-1.5 text-xs text-[var(--text-primary)] resize-none font-mono"
+          />
+        </div>
+
+        {/* Approval & Interrupt Config (Feature 4) */}
+        <div className="flex flex-wrap gap-4 items-center">
+          <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tool.requiresApproval ?? false}
+              onChange={(e) => onUpdate(tool.id, { requiresApproval: e.target.checked })}
+              className="rounded"
+            />
+            Requires Approval
+          </label>
+
+          <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tool.interruptConfig?.enabled ?? false}
+              onChange={(e) => onUpdate(tool.id, {
+                interruptConfig: {
+                  enabled: e.target.checked,
+                  type: tool.interruptConfig?.type ?? 'approval',
+                },
+              })}
+              className="rounded"
+            />
+            Has Interrupt
+          </label>
+
+          {tool.interruptConfig?.enabled && (
+            <select
+              value={tool.interruptConfig.type}
+              onChange={(e) => onUpdate(tool.id, {
+                interruptConfig: {
+                  enabled: true,
+                  type: e.target.value as 'approval' | 'user_input',
+                },
+              })}
+              className="bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded px-2 py-1 text-xs text-[var(--text-primary)]"
+            >
+              <option value="approval">Approval</option>
+              <option value="user_input">User Input</option>
+            </select>
+          )}
+        </div>
       </div>
       <button
         onClick={() => onRemove(tool.id)}
