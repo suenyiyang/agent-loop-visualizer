@@ -14,6 +14,14 @@ export function exportState() {
     state.actors,
     state.steps,
     state.groups,
+    {
+      systemPromptTemplate: state.systemPromptTemplate,
+      toolDefinitions: state.toolDefinitions,
+      connectorSettings: {
+        baseUrl: state.connectorSettings.baseUrl,
+        modelId: state.connectorSettings.modelId,
+      },
+    },
   );
   downloadJson(snapshot, `agent-loop-${new Date().toISOString().slice(0, 10)}.json`);
 }
@@ -35,6 +43,12 @@ export function importState(file: File): Promise<void> {
         store.setActors(snapshot.sequenceDiagram.actors);
         store.setSteps(snapshot.sequenceDiagram.steps);
         store.setGroups(snapshot.sequenceDiagram.groups);
+
+        if (snapshot.settings) {
+          store.setSystemPromptTemplate(snapshot.settings.systemPromptTemplate);
+          useAppStore.setState({ toolDefinitions: snapshot.settings.toolDefinitions });
+          store.setConnectorSettings(snapshot.settings.connectorSettings);
+        }
         resolve();
       } catch (e) {
         reject(e);

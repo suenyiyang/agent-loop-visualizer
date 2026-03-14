@@ -1,15 +1,36 @@
 import { useAppStore } from '../store/useAppStore';
 import { handleVisualizationEvent } from './visualization-callback';
+import { resolveTemplate } from '../utils/template';
+import { buildToolSchemas, formatToolsForPrompt } from '../utils/tool-schema';
 
 export async function runAgent(userInput: string, signal: AbortSignal) {
-  const { connectorSettings } = useAppStore.getState();
-  const { baseUrl, apiKey, modelId } = connectorSettings;
+  const state = useAppStore.getState();
+  const { baseUrl, apiKey, modelId } = state.connectorSettings;
+  const { systemPromptTemplate, toolDefinitions } = state;
+
+  const systemPrompt = resolveTemplate(systemPromptTemplate, {
+    tools: formatToolsForPrompt(toolDefinitions),
+  });
+
+  const toolSchemas = buildToolSchemas(toolDefinitions);
 
   // Add system prompt
   handleVisualizationEvent({
     type: 'llm_start',
     content: userInput,
   });
+
+  // Build request body
+  const body: Record<string, unknown> = {
+    model: modelId,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userInput },
+    ],
+  };
+  if (toolSchemas.length > 0) {
+    body.tools = toolSchemas;
+  }
 
   // Make a direct API call to an OpenAI-compatible endpoint
   const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -18,29 +39,7 @@ export async function runAgent(userInput: string, signal: AbortSignal) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model: modelId,
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user', content: userInput },
-      ],
-      tools: [
-        {
-          type: 'function',
-          function: {
-            name: 'get_weather',
-            description: 'Get current weather for a location',
-            parameters: {
-              type: 'object',
-              properties: {
-                location: { type: 'string', description: 'City name' },
-              },
-              required: ['location'],
-            },
-          },
-        },
-      ],
-    }),
+    body: JSON.stringify(body),
     signal,
   });
 

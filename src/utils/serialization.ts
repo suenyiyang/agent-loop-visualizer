@@ -1,11 +1,19 @@
 import type { ContextMessage } from '../types/context';
 import type { Actor, SequenceStep, ActorGroup } from '../types/sequence';
+import type { ToolDefinition } from '../types/settings';
+
+export interface SnapshotSettings {
+  systemPromptTemplate: string;
+  toolDefinitions: ToolDefinition[];
+  connectorSettings: { baseUrl: string; modelId: string };
+}
 
 export interface AppSnapshot {
   version: 1;
   exportedAt: string;
   contextWindow: { messages: ContextMessage[]; tokenLimit: number };
   sequenceDiagram: { actors: Actor[]; steps: SequenceStep[]; groups: ActorGroup[] };
+  settings?: SnapshotSettings;
 }
 
 export function createSnapshot(
@@ -14,12 +22,14 @@ export function createSnapshot(
   actors: Actor[],
   steps: SequenceStep[],
   groups: ActorGroup[],
+  settings?: SnapshotSettings,
 ): AppSnapshot {
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
     contextWindow: { messages, tokenLimit },
     sequenceDiagram: { actors, steps, groups },
+    ...(settings && { settings }),
   };
 }
 

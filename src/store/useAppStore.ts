@@ -4,8 +4,9 @@ import { createContextSlice, type ContextSlice } from './slices/context-slice';
 import { createSequenceSlice, type SequenceSlice } from './slices/sequence-slice';
 import { createConnectorSlice, type ConnectorSlice } from './slices/connector-slice';
 import { createThemeSlice, type ThemeSlice } from './slices/theme-slice';
+import { createSettingsSlice, type SettingsSlice } from './slices/settings-slice';
 
-export type AppStore = ContextSlice & SequenceSlice & ConnectorSlice & ThemeSlice;
+export type AppStore = ContextSlice & SequenceSlice & ConnectorSlice & ThemeSlice & SettingsSlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -14,6 +15,7 @@ export const useAppStore = create<AppStore>()(
       ...createSequenceSlice(...a),
       ...createConnectorSlice(...a),
       ...createThemeSlice(...a),
+      ...createSettingsSlice(...a),
     }),
     {
       name: 'agent-loop-visualizer',
@@ -30,6 +32,8 @@ export const useAppStore = create<AppStore>()(
           modelId: state.connectorSettings.modelId,
           apiKey: '',
         },
+        systemPromptTemplate: state.systemPromptTemplate,
+        toolDefinitions: state.toolDefinitions,
       }),
     },
   ),

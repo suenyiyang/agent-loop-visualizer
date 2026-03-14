@@ -1,9 +1,25 @@
+import { Routes, Route } from 'react-router';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import { TopBar } from './components/TopBar/TopBar';
 import { ContextWindowPanel } from './components/ContextWindow/Panel';
 import { SequenceDiagramPanel } from './components/SequenceDiagram/Panel';
+import { SettingsPage } from './components/Settings/SettingsPage';
 import { useTheme } from './hooks/use-theme';
 import { useKeyboardDelete } from './hooks/use-keyboard-delete';
+
+function VisualizerLayout() {
+  return (
+    <Group orientation="horizontal" className="flex-1">
+      <Panel defaultSize={40} minSize={25}>
+        <ContextWindowPanel />
+      </Panel>
+      <Separator className="w-1.5 bg-[var(--surface-secondary)] hover:bg-blue-500/40 transition-colors cursor-col-resize" />
+      <Panel defaultSize={60} minSize={30}>
+        <SequenceDiagramPanel />
+      </Panel>
+    </Group>
+  );
+}
 
 export default function App() {
   useTheme();
@@ -12,15 +28,10 @@ export default function App() {
   return (
     <>
       <TopBar />
-      <Group orientation="horizontal" className="flex-1">
-        <Panel defaultSize={40} minSize={25}>
-          <ContextWindowPanel />
-        </Panel>
-        <Separator className="w-1.5 bg-[var(--surface-secondary)] hover:bg-blue-500/40 transition-colors cursor-col-resize" />
-        <Panel defaultSize={60} minSize={30}>
-          <SequenceDiagramPanel />
-        </Panel>
-      </Group>
+      <Routes>
+        <Route path="/" element={<VisualizerLayout />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Routes>
       {dialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-[var(--surface-secondary)] border border-[var(--border-primary)] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
