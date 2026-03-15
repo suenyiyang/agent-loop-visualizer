@@ -7,6 +7,7 @@ interface CallbackEvent {
     | 'interrupt_start' | 'interrupt_end';
   content: string;
   toolName?: string;
+  toolCallId?: string;
 }
 
 interface VisualizationResult {
@@ -32,8 +33,11 @@ export function handleVisualizationEvent(event: CallbackEvent): VisualizationRes
     }
     case 'tool_start': {
       const messageId = store.addMessage('tool_call', event.content, 'agent');
-      if (event.toolName) {
-        store.updateMessage(messageId, { metadata: { toolName: event.toolName } });
+      const meta: Record<string, string> = {};
+      if (event.toolName) meta.toolName = event.toolName;
+      if (event.toolCallId) meta.toolCallId = event.toolCallId;
+      if (Object.keys(meta).length > 0) {
+        store.updateMessage(messageId, { metadata: meta });
       }
       syncOnMessageAdd(useAppStore.getState(), messageId);
       const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
@@ -41,6 +45,12 @@ export function handleVisualizationEvent(event: CallbackEvent): VisualizationRes
     }
     case 'tool_end': {
       const messageId = store.addMessage('tool_result', event.content, 'agent');
+      const meta: Record<string, string> = {};
+      if (event.toolName) meta.toolName = event.toolName;
+      if (event.toolCallId) meta.toolCallId = event.toolCallId;
+      if (Object.keys(meta).length > 0) {
+        store.updateMessage(messageId, { metadata: meta });
+      }
       syncOnMessageAdd(useAppStore.getState(), messageId);
       const msg = useAppStore.getState().messages.find((m) => m.id === messageId);
       return { messageId, stepId: msg?.linkedSequenceStepId ?? null };

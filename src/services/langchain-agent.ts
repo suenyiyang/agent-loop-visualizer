@@ -195,6 +195,7 @@ export async function runAgent(userInput: string | null, signal: AbortSignal) {
           ? tc.function.arguments
           : JSON.stringify(tc.function.arguments),
         toolName: tc.function.name,
+        toolCallId: tc.id,
       });
 
       // Record console entry for tool call — linked to the tool_call context message
@@ -242,6 +243,8 @@ export async function runAgent(userInput: string | null, signal: AbortSignal) {
           handleVisualizationEvent({
             type: 'tool_end',
             content: rejectionResult,
+            toolName: tc.function.name,
+            toolCallId: tc.id,
           });
           messages.push({
             role: 'tool',
@@ -324,6 +327,8 @@ export async function runAgent(userInput: string | null, signal: AbortSignal) {
       const toolResultViz = handleVisualizationEvent({
         type: 'tool_end',
         content: finalResult,
+        toolName: tc.function.name,
+        toolCallId: tc.id,
       });
 
       // Record console entry for tool result — linked to the tool_result context message
