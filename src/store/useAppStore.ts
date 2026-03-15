@@ -25,7 +25,7 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'agent-loop-visualizer',
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         messages: state.messages,
         tokenLimit: state.tokenLimit,
@@ -41,6 +41,7 @@ export const useAppStore = create<AppStore>()(
         systemPromptTemplates: state.systemPromptTemplates,
         toolDefinitions: state.toolDefinitions,
         consoleVisible: state.consoleVisible,
+        consoleEntries: state.consoleEntries,
       }),
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
@@ -55,6 +56,7 @@ export const useAppStore = create<AppStore>()(
           delete state.systemPromptTemplate;
           delete state.activeTemplateId;
         }
+        // v2→v3: consoleEntries now persisted; defaults to [] for existing users
         return state;
       },
     },

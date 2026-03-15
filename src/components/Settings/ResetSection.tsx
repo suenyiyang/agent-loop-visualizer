@@ -10,6 +10,7 @@ export function ResetSection() {
   const resetSequenceData = useAppStore((s) => s.resetSequenceData);
   const resetSettings = useAppStore((s) => s.resetSettings);
   const resetConnectorSettings = useAppStore((s) => s.resetConnectorSettings);
+  const clearConsole = useAppStore((s) => s.clearConsole);
 
   return (
     <>
@@ -30,6 +31,7 @@ export function ResetSection() {
           resetSequenceData();
           resetSettings();
           resetConnectorSettings();
+          clearConsole();
           setShowConfirm(false);
         }}
         onCancel={() => setShowConfirm(false)}

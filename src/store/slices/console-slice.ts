@@ -20,6 +20,7 @@ export interface ConsoleSlice {
   selectConsoleEntry: (id: string | null) => void;
   clearConsole: () => void;
   updateConsoleEntry: (id: string, updates: Partial<ConsoleEntry>) => void;
+  setConsoleEntries: (entries: ConsoleEntry[]) => void;
 }
 
 export const createConsoleSlice: StateCreator<ConsoleSlice, [], [], ConsoleSlice> = (set, get) => ({
@@ -51,4 +52,6 @@ export const createConsoleSlice: StateCreator<ConsoleSlice, [], [], ConsoleSlice
       ),
     });
   },
+
+  setConsoleEntries: (entries) => set({ consoleEntries: entries, selectedConsoleEntryId: null }),
 });

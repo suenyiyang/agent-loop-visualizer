@@ -22,6 +22,7 @@ export function exportState() {
         modelId: state.connectorSettings.modelId,
       },
     },
+    state.consoleEntries,
   );
   downloadJson(snapshot, `agent-loop-${new Date().toISOString().slice(0, 10)}.json`);
 }
@@ -48,6 +49,9 @@ export function importState(file: File): Promise<void> {
           store.setSystemPromptTemplates(snapshot.settings.systemPromptTemplates);
           useAppStore.setState({ toolDefinitions: snapshot.settings.toolDefinitions });
           store.setConnectorSettings(snapshot.settings.connectorSettings);
+        }
+        if (snapshot.console?.entries) {
+          store.setConsoleEntries(snapshot.console.entries);
         }
         resolve();
       } catch (e) {

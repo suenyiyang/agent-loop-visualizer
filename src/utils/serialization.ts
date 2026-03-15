@@ -1,6 +1,7 @@
 import type { ContextMessage } from '../types/context';
 import type { Actor, SequenceStep, ActorGroup } from '../types/sequence';
 import type { ToolDefinition, SystemPromptTemplate } from '../types/settings';
+import type { ConsoleEntry } from '../store/slices/console-slice';
 
 export interface SnapshotSettings {
   systemPromptTemplates: SystemPromptTemplate[];
@@ -14,6 +15,7 @@ export interface AppSnapshot {
   contextWindow: { messages: ContextMessage[]; tokenLimit: number };
   sequenceDiagram: { actors: Actor[]; steps: SequenceStep[]; groups: ActorGroup[] };
   settings?: SnapshotSettings;
+  console?: { entries: ConsoleEntry[] };
 }
 
 export function createSnapshot(
@@ -23,6 +25,7 @@ export function createSnapshot(
   steps: SequenceStep[],
   groups: ActorGroup[],
   settings?: SnapshotSettings,
+  consoleEntries?: ConsoleEntry[],
 ): AppSnapshot {
   return {
     version: 1,
@@ -30,6 +33,7 @@ export function createSnapshot(
     contextWindow: { messages, tokenLimit },
     sequenceDiagram: { actors, steps, groups },
     ...(settings && { settings }),
+    ...(consoleEntries && consoleEntries.length > 0 && { console: { entries: consoleEntries } }),
   };
 }
 

@@ -68,7 +68,7 @@ export function RunAgentButton() {
     return (
       <button
         onClick={handleAbort}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-900/50 border border-red-700 hover:border-red-500 transition-colors text-xs text-red-300"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-100 border border-red-300 hover:border-red-500 transition-colors text-xs text-red-700 dark:bg-red-900/50 dark:border-red-700 dark:hover:border-red-500 dark:text-red-300"
       >
         <Square size={12} />
         Stop
@@ -78,7 +78,7 @@ export function RunAgentButton() {
 
   if (agentStatus === 'paused') {
     return (
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-900/50 border border-amber-700 text-xs text-amber-300">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-100 border border-amber-300 text-xs text-amber-700 dark:bg-amber-900/50 dark:border-amber-700 dark:text-amber-300">
         <Loader2 size={12} className="animate-spin" />
         Paused (waiting for input)
       </span>
@@ -100,7 +100,7 @@ export function RunAgentButton() {
       )}
       <button
         onClick={handleRun}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-900/50 border border-green-700 hover:border-green-500 transition-colors text-xs text-green-300"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 hover:border-green-500 transition-colors text-xs text-green-700 dark:bg-green-900/50 dark:border-green-700 dark:hover:border-green-500 dark:text-green-300"
       >
         <Play size={12} />
         Run

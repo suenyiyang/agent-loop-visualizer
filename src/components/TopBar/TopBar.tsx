@@ -10,6 +10,7 @@ export function TopBar() {
   const agentError = useAppStore((s) => s.agentError);
   const resetContextData = useAppStore((s) => s.resetContextData);
   const resetSequenceData = useAppStore((s) => s.resetSequenceData);
+  const clearConsole = useAppStore((s) => s.clearConsole);
   const toggleConsole = useAppStore((s) => s.toggleConsole);
   const consoleVisible = useAppStore((s) => s.consoleVisible);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -53,7 +54,7 @@ export function TopBar() {
             onClick={toggleConsole}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-xs ${
               consoleVisible
-                ? 'bg-blue-900/50 border-blue-700 text-blue-300'
+                ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/50 dark:border-blue-700 dark:text-blue-300'
                 : 'bg-[var(--surface-secondary)] border-[var(--border-primary)] hover:border-[var(--border-secondary)] text-[var(--text-secondary)]'
             }`}
             title="Toggle Console"
@@ -80,6 +81,7 @@ export function TopBar() {
         onConfirm={() => {
           resetContextData();
           resetSequenceData();
+          clearConsole();
           setShowResetConfirm(false);
         }}
         onCancel={() => setShowResetConfirm(false)}
