@@ -73,6 +73,60 @@ function parsePropertyDef(name: string, def: Record<string, unknown>, isRequired
   return prop;
 }
 
+export function jsonSchemaToZodCode(json: string): string {
+  if (!json.trim()) return '';
+  try {
+    const schema = JSON.parse(json);
+    if (schema.type !== 'object' || !schema.properties) return '';
+    return `z.object({\n${buildZodProperties(schema.properties, schema.required ?? [])}\n})`;
+  } catch {
+    return '';
+  }
+}
+
+function buildZodProperties(
+  properties: Record<string, Record<string, unknown>>,
+  required: string[],
+  indent = '  ',
+): string {
+  return Object.entries(properties)
+    .map(([name, def]) => {
+      let expr = buildZodType(def, indent);
+      if (def.description) {
+        expr += `.describe(${JSON.stringify(def.description)})`;
+      }
+      if (!required.includes(name)) {
+        expr += '.optional()';
+      }
+      return `${indent}${name}: ${expr},`;
+    })
+    .join('\n');
+}
+
+function buildZodType(def: Record<string, unknown>, indent: string): string {
+  const type = (def.type as string) ?? 'string';
+  switch (type) {
+    case 'string':
+      return 'z.string()';
+    case 'number':
+      return 'z.number()';
+    case 'boolean':
+      return 'z.boolean()';
+    case 'array': {
+      const items = (def.items as Record<string, unknown>) ?? {};
+      return `z.array(${buildZodType(items, indent)})`;
+    }
+    case 'object': {
+      const props = (def.properties as Record<string, Record<string, unknown>>) ?? {};
+      const req = (def.required as string[]) ?? [];
+      const inner = buildZodProperties(props, req, indent + '  ');
+      return `z.object({\n${inner}\n${indent}})`;
+    }
+    default:
+      return 'z.string()';
+  }
+}
+
 export function visualModelToJsonSchema(model: VisualSchemaModel): string {
   if (model.properties.length === 0) return '';
 

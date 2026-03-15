@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { Play, Square, Loader2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -7,11 +7,9 @@ export function RunAgentButton() {
   const setAgentStatus = useAppStore((s) => s.setAgentStatus);
   const apiKey = useAppStore((s) => s.connectorSettings.apiKey);
   const messages = useAppStore((s) => s.messages);
-  const [userInput, setUserInput] = useState('');
-  const [showInput, setShowInput] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const lastMessageIsUser = messages.length > 0 && messages[messages.length - 1].type === 'user_message';
+  const isEmpty = messages.length === 0;
 
   const handleRun = useCallback(async () => {
     if (!apiKey) {
@@ -19,35 +17,11 @@ export function RunAgentButton() {
       return;
     }
 
-    // If last message is already a user message, run directly without new input
-    if (lastMessageIsUser) {
-      setAgentStatus('running');
-      abortRef.current = new AbortController();
-      try {
-        const { runAgent } = await import('../../services/langchain-agent');
-        await runAgent(null, abortRef.current.signal);
-        setAgentStatus('idle');
-      } catch (err) {
-        if ((err as Error).name === 'AbortError') {
-          setAgentStatus('idle');
-        } else {
-          setAgentStatus('error', (err as Error).message);
-        }
-      }
-      return;
-    }
-
-    if (!userInput.trim()) {
-      setShowInput(true);
-      return;
-    }
-
     setAgentStatus('running');
     abortRef.current = new AbortController();
-
     try {
       const { runAgent } = await import('../../services/langchain-agent');
-      await runAgent(userInput, abortRef.current.signal);
+      await runAgent(null, abortRef.current.signal);
       setAgentStatus('idle');
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
@@ -56,9 +30,7 @@ export function RunAgentButton() {
         setAgentStatus('error', (err as Error).message);
       }
     }
-    setShowInput(false);
-    setUserInput('');
-  }, [apiKey, userInput, setAgentStatus, lastMessageIsUser]);
+  }, [apiKey, setAgentStatus]);
 
   const handleAbort = useCallback(() => {
     abortRef.current?.abort();
@@ -86,25 +58,17 @@ export function RunAgentButton() {
   }
 
   return (
-    <div className="flex items-center gap-1.5">
-      {showInput && !lastMessageIsUser && (
-        <input
-          type="text"
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleRun()}
-          placeholder="Enter prompt..."
-          className="bg-[var(--surface-primary)] border border-[var(--border-primary)] rounded px-2 py-1 text-xs text-[var(--text-primary)] w-48"
-          autoFocus
-        />
-      )}
-      <button
-        onClick={handleRun}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-100 border border-green-300 hover:border-green-500 transition-colors text-xs text-green-700 dark:bg-green-900/50 dark:border-green-700 dark:hover:border-green-500 dark:text-green-300"
-      >
-        <Play size={12} />
-        Run
-      </button>
-    </div>
+    <button
+      onClick={handleRun}
+      disabled={isEmpty}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-xs ${
+        isEmpty
+          ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-600'
+          : 'bg-green-100 border-green-300 hover:border-green-500 text-green-700 dark:bg-green-900/50 dark:border-green-700 dark:hover:border-green-500 dark:text-green-300'
+      }`}
+    >
+      <Play size={12} />
+      Run
+    </button>
   );
 }

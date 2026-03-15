@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ToolDefinition } from '../../../types/settings';
+import { jsonSchemaToZodCode } from '../../../utils/zod-schema-parser';
 import { JsonSchemaTab } from './JsonSchemaTab';
 import { ZodCodeTab } from './ZodCodeTab';
 import { VisualBuilderTab } from './VisualBuilderTab';
@@ -41,7 +42,14 @@ export function SchemaEditorTabs({ tool, onUpdate }: Props) {
       {activeTab === 'json' && (
         <JsonSchemaTab
           value={tool.parametersJson ?? ''}
-          onChange={(v) => onUpdate({ parametersJson: v })}
+          onChange={(v) => {
+            try {
+              JSON.parse(v);
+              onUpdate({ parametersJson: v, zodCode: jsonSchemaToZodCode(v) });
+            } catch {
+              onUpdate({ parametersJson: v });
+            }
+          }}
         />
       )}
       {activeTab === 'zod' && (
@@ -53,7 +61,7 @@ export function SchemaEditorTabs({ tool, onUpdate }: Props) {
       {activeTab === 'visual' && (
         <VisualBuilderTab
           parametersJson={tool.parametersJson ?? ''}
-          onUpdate={(json) => onUpdate({ parametersJson: json })}
+          onUpdate={(json) => onUpdate({ parametersJson: json, zodCode: jsonSchemaToZodCode(json) })}
         />
       )}
     </div>

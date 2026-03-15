@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseZodToJsonSchema } from '../../../utils/zod-schema-parser';
 import type { ToolDefinition } from '../../../types/settings';
 
@@ -11,6 +11,8 @@ export function ZodCodeTab({ zodCode, onUpdate }: Props) {
   const [code, setCode] = useState(zodCode);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => { setCode(zodCode); }, [zodCode]);
 
   const handleParse = () => {
     if (!code.trim()) {
