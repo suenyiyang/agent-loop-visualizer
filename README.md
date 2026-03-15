@@ -4,6 +4,34 @@
 
 A web-based tool for visualizing and debugging AI agent execution flows. Designed for inspecting the complete lifecycle of an agent loop — context management, tool calls, message exchanges, and more.
 
+## Screenshots
+
+### Main Visualizer
+
+The split-pane layout with the **Context Window** on the left (showing messages with token counts) and the **Sequence Diagram** on the right (visualizing the agent execution flow with actors and interactions).
+
+![Main Visualizer](docs/screenshots/main-visualizer.png)
+
+### Console Panel
+
+The bottom **Console Panel** shows raw JSON logs for each LLM request/response and tool call/result, useful for debugging agent execution in real time.
+
+![Console Panel](docs/screenshots/console-panel.png)
+
+### Settings — System Prompts & Tool Definitions
+
+Configure **System Prompt Templates** with variable support (`{{tools}}`) and define **Tool Definitions** with JSON Schema, Zod code, or a visual builder.
+
+![Settings Page](docs/screenshots/settings-page.png)
+
+![Tool Definitions](docs/screenshots/settings-tools.png)
+
+### Dark Mode
+
+Full dark theme support across all panels.
+
+![Dark Mode](docs/screenshots/dark-mode.png)
+
 ## Features
 
 - **Context Window Panel** — Manage messages in the agent context (system prompts, user messages, assistant responses, tool calls, tool results) with drag-and-drop reordering and token usage tracking
